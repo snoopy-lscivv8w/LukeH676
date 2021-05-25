@@ -1,36 +1,41 @@
 package ca.on.sl.comp208.lhahncomp208a3m1;
 
 import android.app.Activity;
+import android.content.Context;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 
-import com.google.gson.Gson;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Scanner;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity {
+    private static Context mContext;
+
+    public static void setmContext(Context mContext) {
+        MainActivity.mContext = mContext;
+    }
+
+    public static Context getContext() {
+        return mContext;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setmContext(this.getApplicationContext());
+
+
         if(isConnected()) {
             Log.i("Status", "Connected");
             WebAsyncTask task = new WebAsyncTask();
-
-            task.execute("http://services.groupkt.com/country/get/all");
+            // this is the URL that we are connecting to to retrieve the JSON data.
+            task.execute(ProviderContract.Data.CONTENT_URI);
         }else {
             Log.i("Status", "Not Connected");
         }
@@ -47,61 +52,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
+// Instead of String,String,Void - Will change to String,Cursor,Void to accomodate the Matrix Cursor being passed
+class WebAsyncTask extends AsyncTask<Uri,Cursor,Void>{
 
-class WebAsyncTask extends AsyncTask<String,String,Void>{
 
     @Override
-    protected Void doInBackground(String... strings) {
-        try {
-            URL url = new URL(strings[0]);
-          //  Log.i("URL",url.toString());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            InputStream inputStream = conn.getInputStream();
+    protected Void doInBackground(Uri... uri) { // takes the URL as a string Array type thing
+        Context c = MainActivity.getContext();
 
-            Scanner scanner = new Scanner(inputStream);
-            StringBuilder builder = new StringBuilder();
-            while(scanner.hasNext()){
-                builder.append(scanner.nextLine());
-            }
-            String data = builder.toString();
-            Gson gson = new Gson();
-            Message[] msg = gson.fromJson(data,Message[].class);
-            for (int i=1;i<msg.length;i++){
-              //  publishProgress(msg[i].getMessage()+"\n");
-                Log.i("values", msg[i].getMessage()+"\n");
-        }
-        }catch(MalformedURLException e){
-            e.printStackTrace();
-            publishProgress("URL PROBLEM");
-        }catch (IOException e){
-            e.printStackTrace();
-            publishProgress("Input Problem");
+        String[] projection = {
+                ProviderContract.Data._ID,
+                ProviderContract.Data.name,
+                ProviderContract.Data.alpha2,
+                ProviderContract.Data.alpha3
+        };
 
+        Cursor cursor;
+        cursor = c.getContentResolver().query(uri[0], projection, null, null,null);
+
+        while (cursor.moveToNext()) {
+            String output =
+                    String.format("%-5s %s\n", cursor.getString(0) + "   " +cursor.getString(1), cursor.getString(2));
+            onProgressUpdate(output);
         }
         return null;
     }
-    @Override
-    protected void onProgressUpdate(String... values){
+
+    //@Override
+    protected void onProgressUpdate(String... values) {
         super.onProgressUpdate();
-        Log.i("values", values[0]+"\n");
+        // finally - Prints to "LOGCAT" (Like printing to console)
+        Log.i("values", values[0] + "\n");
     }
+
 }
-class Message{
-    int status;
-    String message;
-    int junk;
-
-    public int getStatus() {
-        return status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public int getJunk() {
-        return junk;
-    }
-}
-
-
