@@ -84,9 +84,9 @@ public class Provider extends ContentProvider {
             Country[] countries = msg.getRestResponse().getResult();
             for (Country country : countries) {
                 rb = mc.newRow();
-                rb.add(country.getName() + "\n");
-                rb.add(country.getAlpha2_code()+ "\n");
-                rb.add(country.getAlpha3_code()+ "\n");
+                rb.add(country.getName() );
+                rb.add(country.getAlpha2_code());
+                rb.add(country.getAlpha3_code());
             }
         }catch(MalformedURLException e){
             e.printStackTrace();

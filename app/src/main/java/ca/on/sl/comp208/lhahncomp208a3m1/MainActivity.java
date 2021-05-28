@@ -45,10 +45,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean isConnected(){
         ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Activity.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected())
-            return true;
-        else
-            return false;
+        return networkInfo != null && networkInfo.isConnected();
     }
 
 }
@@ -70,19 +67,18 @@ class WebAsyncTask extends AsyncTask<Uri,Cursor,Void>{
         Cursor cursor;
         cursor = c.getContentResolver().query(uri[0], projection, null, null,null);
 
-        while (cursor.moveToNext()) {
-            String output =
-                    String.format("%-5s %s\n", cursor.getString(0) + "   " +cursor.getString(1), cursor.getString(2));
-            onProgressUpdate(output);
-        }
+        onProgressUpdate(cursor);
         return null;
     }
 
     //@Override
-    protected void onProgressUpdate(String... values) {
+    protected void onProgressUpdate(Cursor... cursor) {
         super.onProgressUpdate();
-        // finally - Prints to "LOGCAT" (Like printing to console)
-        Log.i("values", values[0] + "\n");
-    }
+                while (cursor[0].moveToNext()) {
+            String output =
+                    String.format("%-5s %s\n", cursor[0].getString(0) + "   " +cursor[0].getString(1), cursor[0].getString(2));
+                    Log.i("values", output + "\n");
+            }
 
+}
 }
