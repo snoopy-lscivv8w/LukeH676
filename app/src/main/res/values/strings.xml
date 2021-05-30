@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">LhahnCOMP208A3M1</string>
+    <string name="app_name">LHahn16</string>
+    <string name="mon">Monday</string>
+    <string name="tues">Tuesday</string>
+    <string name="wed">Wednesday</string>
+    <string name="Thurs">Thursday</string>
+    <string name="fri">Friday</string>
+    <string name="classLabel">Enter Class</string>
+    <string name="selectTime">Select Time</string>
+    <string name="selectRoom">Select Room</string>
+    <string name="day" />
+    <string name="goBack">Go Back to Main Menu</string>
+    <string name="dayofweek">The day of the week is:</string>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
 </resources>

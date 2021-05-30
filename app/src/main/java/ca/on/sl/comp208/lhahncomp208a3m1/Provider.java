@@ -3,6 +3,7 @@ package ca.on.sl.comp208.lhahncomp208a3m1;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
@@ -11,12 +12,17 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
+
+import static ca.on.sl.comp208.lhahncomp208a3m1.ProviderContract.AUTHORITY;
 
 
 public class Provider extends ContentProvider {
@@ -54,49 +60,103 @@ public class Provider extends ContentProvider {
                         String[] selectionArgs, String sortOrder) {
         MatrixCursor mc = new MatrixCursor(projection);
         MatrixCursor.RowBuilder rb;
-        // TODO: Implement this to handle query requests from clients.
-        //throw new UnsupportedOperationException("Not yet implemented");
-        //  Log.i("URL",url.toString());
+
+
         try {
-            URL url = new URL("http://services.groupkt.com/country/get/all");
-            //  Log.i("URL",url.toString());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            InputStream inputStream = conn.getInputStream();
-            // the above (I think) is supposed to be moved to Provider.java
-            // Scanner gets replaced by a "MatrixCursor" in the Provider.java class
-            // once all is said and done - the Query method from Provider.java is called here.
+            int uriType = ProviderContract.matcher.match(uri);
+            URL url;
+            HttpURLConnection conn;
+            InputStream inputStream;
+            Scanner scanner;
+            StringBuilder builder;
+            String data;
+            Gson gson;
+            Country[] countries;
+            Response msg;
+            switch (uriType) {
+                case 1:
+                    url = new URL("http://services.groupkt.com/country/get/all");
+                    conn = (HttpURLConnection) url.openConnection();
+                    inputStream = conn.getInputStream();
 
-            Scanner scanner = new Scanner(inputStream);
-            StringBuilder builder = new StringBuilder();
-            while(scanner.hasNext()){
-                builder.append(scanner.nextLine());
+                    scanner = new Scanner(inputStream);
+                    builder = new StringBuilder();
+                    while (scanner.hasNext()) {
+                        builder.append(scanner.nextLine());
+                    }
+
+                    data = builder.toString();
+                    gson = new Gson();
+                     msg = gson.fromJson(data, Response.class);
+
+                     countries = msg.getRestResponse().getResult();
+                    int ctr = 0;
+                    for (Country country : countries) {
+                        ctr++;
+                        rb = mc.newRow();
+                        rb.add(ctr);
+                        rb.add(country.getName());
+                        rb.add(country.getAlpha2_code());
+                        rb.add(country.getAlpha3_code());
+                    }
+
+                    break;
+                case 2:
+                    String alpha3 = uri.getQueryParameter("alpha3");
+                    url = new URL("https://restcountries.eu/rest/v2/alpha/"+alpha3);
+                    conn = (HttpURLConnection) url.openConnection();
+                    inputStream = conn.getInputStream();
+
+                    scanner = new Scanner(inputStream);
+                    builder = new StringBuilder();
+                    while (scanner.hasNext()) {
+                        builder.append(scanner.nextLine());
+                    }
+
+                     data = builder.toString();
+
+                    JSONObject jsonStr = new JSONObject(data);
+
+                    Log.i("value", jsonStr.toString());
+
+                    url = new URL("http://services.groupkt.com/country/get/all");
+                    conn = (HttpURLConnection) url.openConnection();
+                    inputStream = conn.getInputStream();
+
+                    scanner = new Scanner(inputStream);
+                    builder = new StringBuilder();
+                    while (scanner.hasNext()) {
+                        builder.append(scanner.nextLine());
+                    }
+
+                    data = builder.toString();
+                    gson = new Gson();
+                     msg = gson.fromJson(data, Response.class);
+
+                     countries = msg.getRestResponse().getResult();
+                     ctr = 0;
+                    for (Country country : countries) {
+                        ctr++;
+                        rb = mc.newRow();
+                        rb.add(ctr);
+                        rb.add(country.getName());
+                        rb.add(country.getAlpha2_code());
+                        rb.add(country.getAlpha3_code());
+                    }
+
+                    break;
             }
 
-            String data = builder.toString();
-            Gson gson = new Gson();
-            Response msg = gson.fromJson(data,Response.class);
-//            String[] messages = msg.getRestResponse().getMessages();
-//            for (int i=0; i < messages.length; i++){
-//                //  publishProgress(msg[i].getMessage()+"\n");
-//                Log.i("value", messages[i] + "\n");
-//            }
-
-            Country[] countries = msg.getRestResponse().getResult();
-            for (Country country : countries) {
-                rb = mc.newRow();
-                rb.add(country.getName() );
-                rb.add(country.getAlpha2_code());
-                rb.add(country.getAlpha3_code());
-            }
-        }catch(MalformedURLException e){
+        } catch (MalformedURLException e) {
             e.printStackTrace();
 
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
 
 
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-
         return mc;
     }
 
